@@ -1,23 +1,25 @@
 # 使用说明
-1、将下载的插件中两个文件夹复制到custom_components目录下
-2、key和secret请在萤石开发网站获取，具体可详见https://bbs.hassbian.com/thread-7062-1-1.html
-3、在configuration.yaml文件中添加以下内容启用插件
+1、将下载的插件中两个文件夹复制到custom_components目录下<br/>
+2、key和secret请在萤石开发网站获取，具体可详见https://bbs.hassbian.com/thread-7062-1-1.html<br/>
+3、在configuration.yaml文件中添加以下内容启用插件<br/>
 
+~~~
 ezvizctrl:
   deviceSerial: ****设备序列号
   appKey: ****api接口里面的appkey
   appSecret: ****api接口里面的appsecret
 sensor:  - platform: ezviz
-    appKey: ****    appSecret: ****
+    appKey: ****
+    appSecret: ****
     deviceSerial: ***
     scan_interval: 30
     options: 
       - privacyStatus
       - AlarmStatus
       - alarmSoundMode
-
+~~~
 4、在configuration.yaml添加两个开关，用于修改移动侦测和遮蔽状态
-
+~~~
 switch:
   - platform: template
     switches:
@@ -49,11 +51,11 @@ switch:
           {% else %}
             mdi:shield-off
           {% endif %}
-
+~~~
 5、在lovelace上面添加控制界面
 首先安装 radial-menu 插件，https://github.com/custom-cards/radial-menu
 将如下代码，通过原始编辑器，在合适的位置添加进去
-
+~~~
 - cards:
    - entities:
        - switch.privacy
@@ -95,4 +97,4 @@ switch:
  type: vertical-stack
 
 6、enjoyit
-
+~~~
