@@ -8,7 +8,8 @@ ezvizctrl:
   deviceSerial: ****设备序列号
   appKey: ****api接口里面的appkey
   appSecret: ****api接口里面的appsecret
-sensor:  - platform: ezviz
+sensor:
+  - platform: ezviz
     appKey: ****
     appSecret: ****
     deviceSerial: ***
