@@ -1,11 +1,9 @@
-import json
 import time
-from urllib import request, parse
 import logging
 from datetime import timedelta
 import voluptuous as vol
 import requests
- 
+
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
     ATTR_ATTRIBUTION, ATTR_FRIENDLY_NAME, TEMP_CELSIUS)
@@ -13,7 +11,7 @@ from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import track_time_interval
 import homeassistant.util.dt as dt_util
- 
+
 _LOGGER = logging.getLogger(__name__)
 
 TIME_BETWEEN_UPDATES = timedelta(seconds=60)
