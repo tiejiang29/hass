@@ -326,14 +326,16 @@ class EZVIZData(object):
         if self._post(url, ctrl):
             # 更新传感器状态
             self._sceneStatus = "启用遮蔽"
-            self.hass.states.set('sensor.ezviz_scenestatus', self._sceneStatus)
+            self.hass.states.set('sensor.ezviz_sceneStatus', self._sceneStatus)
+            _LOGGER.info("enable sence")
 
     def disable_sence(self, call):
         ctrl = {"enable": '0'}
         url = 'https://open.ys7.com/api/lapp/device/scene/switch/set'
         if self._post(url, ctrl):
             self._sceneStatus = "关闭遮蔽"
-            self.hass.states.set('sensor.ezviz_scenestatus', self._sceneStatus)
+            self.hass.states.set('sensor.ezviz_sceneStatus', self._sceneStatus)
+            _LOGGER.info("disable sence")
 
     def enable_defence(self, call):
         #活动检测开关
