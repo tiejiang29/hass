@@ -27,7 +27,9 @@ OPTIONS = {
     "sceneStatus": ["ezviz_sceneStatus", "遮蔽状态", "mdi:eye-off", ""],
     "privacyStatus": ["ezviz_privacyStatus", "隐私状态", "mdi:looks", ""],
     "pirStatus": ["ezviz_pirStatus", "红外状态", "mdi:camcorder-box", ""],
-    "alarmSoundMode": ["ezviz_alarmSoundMode", "告警模式", "mdi:surround-sound", ""],
+    "alarmSoundMode": ["ezviz_alarmSoundMode", "告警声音模式", "mdi:surround-sound", ""],
+    "defenceStatus":["ezviz_defenceStatus", "布防状态", "mdi:shield-home", ""],
+    "onlineStatus": ["ezviz_onlineStatus", "在线状态", "mdi:link", ""],
 }
 
 ATTR_UPDATE_TIME = "更新时间"
@@ -122,6 +124,10 @@ class EZVIZSensor(Entity):
             self._state = self._data.alarmSoundMode
         elif self._type == "pirStatus":
             self._state = self._data.pirStatus
+        elif self._type == "defenceStatus":
+            self._state = self._data.defenceStatus
+        elif self._type == "onlineStatus":
+            self._state = self._data.onlineStatus
 
 class EZVIZData(object):
     """摄像头的数据，存储在这个类中."""
@@ -141,6 +147,8 @@ class EZVIZData(object):
         self._pirStatus = None
         self._sceneStatus = None
         self._alarmSoundMode = None
+        self._defenceStatus = None
+        self._onlineStatus = None
         self._updatetime = None
 
         self.update(dt_util.now())
@@ -151,6 +159,16 @@ class EZVIZData(object):
     def privacyStatus(self):
         """隐私状态"""
         return self._privacyStatus
+
+    @property
+    def defenceStatus(self):
+        """布防状态"""
+        return self._defenceStatus
+
+    @property
+    def onlineStatus(self):
+        """机器在线状态"""
+        return self._onlineStatus
 
     @property
     def sceneStatus(self):
@@ -178,7 +196,6 @@ class EZVIZData(object):
         #POST获取数据
         params = {}
         status_url = "https://open.ys7.com/api/lapp/device/status/get"
-        scene_url = "https://open.ys7.com/api/lapp/device/scene/switch/status"
         result = self._post(status_url, params)
         if result:
             # 根据http返回的结果，更新数据
@@ -208,6 +225,14 @@ class EZVIZData(object):
             else:
                 self._alarmSoundMode = '禁用或不支持'
 
+        self.get_sceneStatus()
+        self.get_deviceInfo()
+
+        self._updatetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+    def get_sceneStatus(self):
+        params = {}
+        scene_url = "https://open.ys7.com/api/lapp/device/scene/switch/status"
         scene = self._post(scene_url, params)
         if scene:
             if scene['data']['enable'] == 1:
@@ -215,10 +240,25 @@ class EZVIZData(object):
             else:
                 self._sceneStatus = '关闭遮蔽'
 
-        self._updatetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        # self._pirStatus= all_result['pirStatus']
-        # self._privacyStatus= all_result['privacyStatus']
-        # self._alarmSoundMode= all_result['alarmSoundMode']
+    def get_deviceInfo(self):
+        #布防开关(活动状态检测开关)
+        url = "https://open.ys7.com/api/lapp/device/info"
+        params = {}
+        ret = self._post(url, params)
+        retdata = ret.get("data", {})
+        defence = retdata.get("defence", 0)
+        if defence == 0:
+            self._defenceStatus = "撤防"
+        else:
+            self._defenceStatus = "布防"
+
+        #设备是否在线
+        online = retdata.get("status", 0)
+        if online == 0:
+            self._onlineStatus = "离线"
+        else:
+            self._onlineStatus = "在线"
+
 
     def request_token(self) -> str:
         #重新获取access_token
@@ -235,9 +275,6 @@ class EZVIZData(object):
         return  access_Token
 
     def Get_access_Token(self, isForce=False):
-        # 记录info级别的日志
-        _LOGGER.info("Update the EZVIZ state...")
-
         if not self.access_Token:
             entobj = self.hass.states.get(self.ENTITYID)
             if entobj:
@@ -283,31 +320,36 @@ class EZVIZData(object):
         return result
 
 
-    def Enable_privacy(self, call):
+    def enable_sence(self, call):
         ctrl = {"enable": '1'}
         url = 'https://open.ys7.com/api/lapp/device/scene/switch/set'
         if self._post(url, ctrl):
             # 更新传感器状态
-            self.hass.states.set('sensor.ezviz_scenestatus', '启用遮蔽')
+            self._sceneStatus = "启用遮蔽"
+            self.hass.states.set('sensor.ezviz_scenestatus', self._sceneStatus)
 
-    def Disable_privacy(self, call):
+    def disable_sence(self, call):
         ctrl = {"enable": '0'}
         url = 'https://open.ys7.com/api/lapp/device/scene/switch/set'
         if self._post(url, ctrl):
-            self.hass.states.set('sensor.ezviz_scenestatus', '关闭遮蔽')
+            self._sceneStatus = "关闭遮蔽"
+            self.hass.states.set('sensor.ezviz_scenestatus', self._sceneStatus)
 
-    def Enable_alarm(self, call):
+    def enable_defence(self, call):
+        #活动检测开关
         ctrl = {"isDefence": '1'}
         url = 'https://open.ys7.com/api/lapp/device/defence/set'
         if self._post(url, ctrl):
             # 更新传感器状态
-            self.hass.states.set('sensor.ezviz_alarmSoundstatus', '布防')
+            self._defenceStatus = "布防"
+            self.hass.states.set('sensor.ezviz_defenceStatus', '布防')
 
-    def Disable_alarm(self, call):
+    def disable_defence(self, call):
         ctrl = {"isDefence": '0'}
         url = 'https://open.ys7.com/api/lapp/device/defence/set'
         if self._post(url, ctrl):
-            self.hass.states.set('sensor.ezviz_alarmSoundstatus', '撤防')
+            self._defenceStatus = "撤防"
+            self.hass.states.set('sensor.ezviz_defenceStatus', '撤防')
 
     def move(self, direc) -> str:
         ctrl = {
@@ -371,10 +413,10 @@ class EZVIZData(object):
     def regist(self):
         # 注册服务
         DOMAIN = "ezviz"
-        self.hass.services.register(DOMAIN, 'enable_privacy', self.Enable_privacy)
-        self.hass.services.register(DOMAIN, 'disable_privacy', self.Disable_privacy)
-        self.hass.services.register(DOMAIN, 'enable_alarm', self.Enable_alarm)
-        self.hass.services.register(DOMAIN, 'disable_alarm', self.Disable_alarm)
+        self.hass.services.register(DOMAIN, 'enable_sence', self.enable_sence)
+        self.hass.services.register(DOMAIN, 'disable_sence', self.disable_sence)
+        self.hass.services.register(DOMAIN, 'enable_defence', self.enable_defence)
+        self.hass.services.register(DOMAIN, 'disable_defence', self.disable_defence)
         self.hass.services.register(DOMAIN, 'up', self.up)
         self.hass.services.register(DOMAIN, 'down', self.down)
         self.hass.services.register(DOMAIN, 'left', self.left)
