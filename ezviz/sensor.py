@@ -192,7 +192,7 @@ class EZVIZData(object):
 
     def update(self, now):
         """从远程更新信息."""
-        _LOGGER.info("Update the EZVIZ state...")
+        _LOGGER.debug("Update the EZVIZ state...")
         #POST获取数据
         params = {}
         status_url = "https://open.ys7.com/api/lapp/device/status/get"
@@ -200,7 +200,6 @@ class EZVIZData(object):
         if result:
             # 根据http返回的结果，更新数据
             all_result = result['data']
-            _LOGGER.debug(all_result)
 
             if all_result['privacyStatus'] == 1:
                 self._privacyStatus = '启用隐私'
@@ -287,7 +286,7 @@ class EZVIZData(object):
 
         if isForce:
             self.access_Token = self.request_token()
-        _LOGGER.info('TOKEN_SUCCESS')
+        _LOGGER.debug('TOKEN_SUCCESS')
         return
 
     def _post(self, url, data) -> dict:
@@ -345,6 +344,7 @@ class EZVIZData(object):
             # 更新传感器状态
             self._defenceStatus = "布防"
             self.hass.states.set('sensor.ezviz_defenceStatus', '布防')
+            _LOGGER.info("enable defence")
 
     def disable_defence(self, call):
         ctrl = {"isDefence": '0'}
@@ -352,6 +352,7 @@ class EZVIZData(object):
         if self._post(url, ctrl):
             self._defenceStatus = "撤防"
             self.hass.states.set('sensor.ezviz_defenceStatus', '撤防')
+            _LOGGER.info("disable defence")
 
     def move(self, direc) -> str:
         ctrl = {
