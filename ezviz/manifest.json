@@ -2,6 +2,7 @@
   "domain": "ezviz",
   "name": "ezviz",
   "documentation": "https://www.example.com",
+  "version":"0.0.1",
   "dependencies": [],
   "codeowners": [],
   "requirements": []
