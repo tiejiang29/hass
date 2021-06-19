@@ -300,8 +300,16 @@ class EZVIZData(object):
             "deviceSerial": self.deviceSerial
         }
         data.update(default_data)
-        ret = requests.post(url, data=data, timeout=5)
-        if not ret.ok:
+        trytimes = 2
+        ret = None
+        for tryidx in range(trytimes):
+            ret = requests.post(url, data=data, timeout=5)
+            if not ret.ok:
+                _LOGGER.warning("Request Error %s %s", url, str(data))
+                continue
+            break
+
+        if not ret or not ret.ok:
             _LOGGER.error("Request Error %s %s", url, str(data))
             return {}
 
@@ -355,25 +363,14 @@ class EZVIZData(object):
             _LOGGER.info("disable defence")
 
     def move(self, direc) -> str:
-        ctrl = {
-                "channelNo": '1',
-                "direction": direc,
-                "speed": '1'
-               }
-        start_url = 'https://open.ys7.com/api/lapp/device/ptz/start'
-        if not self._post(start_url, ctrl):
+        if not self.start(direc):
             _LOGGER.error("move failed")
             return 'FAIL'
 
         # 等待0.2s后停止
         time.sleep(0.2)
-        ctrl = {
-                "channelNo": '1',
-                "direction": direc
-               }
 
-        stop_url = 'https://open.ys7.com/api/lapp/device/ptz/stop'
-        if not self._post(stop_url, ctrl):
+        if not self.stop(direc):
             return 'FAIL'
         return 'OK'
 
@@ -401,17 +398,22 @@ class EZVIZData(object):
     def downright(self, call):
         self.move(7)
 
-    def stop(self, call):
+    def start(self, direc) -> bool:
         ctrl = {
-                "channelNo": '1'
+                "channelNo": '1',
+                "direction": direc,
+                "speed": '1'
                }
-        url ='https://open.ys7.com/api/lapp/device/ptz/stop'
+        start_url = 'https://open.ys7.com/api/lapp/device/ptz/start'
+        return self._post(start_url, ctrl)
 
-        trytimes = 2
-        for idx in range(trytimes):
-            if self._post(url, ctrl):
-                break
-        return
+    def stop(self, call) -> bool:
+        ctrl = {
+            "channelNo": '1',
+            "direction": call,
+        }
+        url = 'https://open.ys7.com/api/lapp/device/ptz/stop'
+        return self._post(url, ctrl)
 
     def regist(self):
         # 注册服务
