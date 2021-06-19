@@ -2,7 +2,8 @@ import time
 import logging
 from datetime import timedelta
 import voluptuous as vol
-import requests
+from requests.exceptions import RequestException
+from requests_futures.sessions import FuturesSession
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
@@ -150,6 +151,7 @@ class EZVIZData(object):
         self._defenceStatus = None
         self._onlineStatus = None
         self._updatetime = None
+        self.session = FuturesSession()
 
         self.update(dt_util.now())
         # 每隔TIME_BETWEEN_UPDATES，调用一次update()
@@ -262,7 +264,13 @@ class EZVIZData(object):
     def request_token(self) -> str:
         #重新获取access_token
         access_Token = ""
-        response = requests.post('https://open.ys7.com/api/lapp/token/get',data=self.apikey).json()
+        response_async = self.session.post('https://open.ys7.com/api/lapp/token/get',data=self.apikey)
+        try:
+            response = response_async.result().json()
+        except RequestException as ex:
+            _LOGGER.error(ex)
+            return ""
+
         #访问url
         if response["code"] == "200":
             _LOGGER.info('GET_TOKEN_SUCCESS')
@@ -303,7 +311,8 @@ class EZVIZData(object):
         trytimes = 2
         ret = None
         for tryidx in range(trytimes):
-            ret = requests.post(url, data=data, timeout=5)
+            ret_async = self.session.post(url, data=data, timeout=5)
+            ret = ret_async.result()
             if not ret.ok:
                 _LOGGER.warning("Request Error %s %s", url, str(data))
                 continue
