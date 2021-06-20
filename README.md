@@ -1,4 +1,5 @@
 # 使用说明
+
 1. 将下载的插件中的`ezviz`文件夹复制到`custom_components`目录下
 2. `key`和`secret`请在[萤石开发网站](https://bbs.hassbian.com/thread-7062-1-1.html)获取
 3. 在`configuration.yaml`文件中添加以下内容启用插件
@@ -17,6 +18,7 @@ sensor:
       - alarmSoundMode
       - defenceStatus
       - onlineStatus
+      - motionStatus
 ```
 
 4. 在`configuration.yaml`添加两个开关，用于修改移动侦测和遮蔽状态
