@@ -1,6 +1,6 @@
 import time
+import datetime
 import logging
-from datetime import timedelta
 import voluptuous as vol
 from requests.exceptions import RequestException
 from requests_futures.sessions import FuturesSession
@@ -15,7 +15,7 @@ import homeassistant.util.dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
-TIME_BETWEEN_UPDATES = timedelta(seconds=60)
+TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=60)
 # 配置文件中平台下的配置项
 
 CONF_APP_KEY = 'appKey'
@@ -31,6 +31,7 @@ OPTIONS = {
     "alarmSoundMode": ["ezviz_alarmSoundMode", "告警声音模式", "mdi:surround-sound", ""],
     "defenceStatus":["ezviz_defenceStatus", "布防状态", "mdi:shield-home", ""],
     "onlineStatus": ["ezviz_onlineStatus", "在线状态", "mdi:link", ""],
+    "motionStatus": ["ezviz_motionStatus", "人体感应事件", "mdi:walk", ""],
 }
 
 ATTR_UPDATE_TIME = "更新时间"
@@ -129,6 +130,8 @@ class EZVIZSensor(Entity):
             self._state = self._data.defenceStatus
         elif self._type == "onlineStatus":
             self._state = self._data.onlineStatus
+        elif self._type == "motionStatus":
+            self._state = self._data.motionStatus
 
 class EZVIZData(object):
     """摄像头的数据，存储在这个类中."""
@@ -150,6 +153,7 @@ class EZVIZData(object):
         self._alarmSoundMode = None
         self._defenceStatus = None
         self._onlineStatus = None
+        self._motionStatus = 0
         self._updatetime = None
         self.session = FuturesSession()
 
@@ -171,6 +175,11 @@ class EZVIZData(object):
     def onlineStatus(self):
         """机器在线状态"""
         return self._onlineStatus
+
+    @property
+    def motionStatus(self):
+        """是否有人体感应"""
+        return self._motionStatus
 
     @property
     def sceneStatus(self):
@@ -228,6 +237,7 @@ class EZVIZData(object):
 
         self.get_sceneStatus()
         self.get_deviceInfo()
+        self.get_montionInfo()
 
         self._updatetime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
@@ -423,6 +433,34 @@ class EZVIZData(object):
         }
         url = 'https://open.ys7.com/api/lapp/device/ptz/stop'
         return self._post(url, ctrl)
+
+    #取间隔时间里的所有告警
+    def get_alarminfo(self) -> list():
+        startime = datetime.datetime.now() - TIME_BETWEEN_UPDATES
+        starttime_s = int(startime.timestamp() * 1000)
+        ctrl = {
+            "pageSize": 20,
+            "pageStart": 0,
+            "startTime": starttime_s,
+            "status": 2, #所有
+        }
+        url = "https://open.ys7.com/api/lapp/alarm/device/list"
+        ret = self._post(url, ctrl)
+        if not ret:
+            return []
+
+        return ret.get("data", [])
+
+    def get_montionInfo(self):
+        alarms = self.get_alarminfo()
+        for alarm in alarms:
+            _LOGGER.debug(alarm)
+            alarmType = alarm.get("alarmType", -1)
+            if alarmType in [10000, 15010]:
+                self._motionStatus = 1
+                return
+        self._motionStatus = 0
+        return
 
     def regist(self):
         # 注册服务
