@@ -69,6 +69,8 @@ switch:
             name: 在线状态
           - entity: sensor.ezviz_privacystatus
             name: 隐私状态
+          - entity: sensor.ezviz_motionstatus
+            name: 人体感应告警
         show_header_toggle: false
         title: 摄像机状态
       - default_dismiss: false
