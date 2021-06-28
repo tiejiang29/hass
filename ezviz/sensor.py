@@ -201,7 +201,7 @@ class EZVIZData(object):
         """更新时间."""
         return self._updatetime
 
-    def update(self, now):
+    def update(self, _):
         """从远程更新信息."""
         _LOGGER.debug("Update the EZVIZ state...")
         #POST获取数据
@@ -312,7 +312,7 @@ class EZVIZData(object):
         self.Get_access_Token()
         if not self.access_Token:
             _LOGGER.error("Request Token Error")
-            return
+            return {}
         default_data = {
             "accessToken": self.access_Token,
             "deviceSerial": self.deviceSerial
@@ -320,7 +320,7 @@ class EZVIZData(object):
         data.update(default_data)
         trytimes = 2
         ret = None
-        for tryidx in range(trytimes):
+        for _ in range(trytimes):
             ret_async = self.session.post(url, data=data, timeout=5)
             ret = ret_async.result()
             if not ret.ok:
@@ -346,7 +346,7 @@ class EZVIZData(object):
         return result
 
 
-    def enable_sence(self, call):
+    def enable_sence(self, _):
         ctrl = {"enable": '1'}
         url = 'https://open.ys7.com/api/lapp/device/scene/switch/set'
         if self._post(url, ctrl):
@@ -355,7 +355,7 @@ class EZVIZData(object):
             self.hass.states.set('sensor.ezviz_sceneStatus', self._sceneStatus)
             _LOGGER.info("enable sence")
 
-    def disable_sence(self, call):
+    def disable_sence(self, _):
         ctrl = {"enable": '0'}
         url = 'https://open.ys7.com/api/lapp/device/scene/switch/set'
         if self._post(url, ctrl):
@@ -363,7 +363,7 @@ class EZVIZData(object):
             self.hass.states.set('sensor.ezviz_sceneStatus', self._sceneStatus)
             _LOGGER.info("disable sence")
 
-    def enable_defence(self, call):
+    def enable_defence(self, _):
         #活动检测开关
         ctrl = {"isDefence": '1'}
         url = 'https://open.ys7.com/api/lapp/device/defence/set'
@@ -373,7 +373,7 @@ class EZVIZData(object):
             self.hass.states.set('sensor.ezviz_defenceStatus', '布防')
             _LOGGER.info("enable defence")
 
-    def disable_defence(self, call):
+    def disable_defence(self, _):
         ctrl = {"isDefence": '0'}
         url = 'https://open.ys7.com/api/lapp/device/defence/set'
         if self._post(url, ctrl):
@@ -393,28 +393,28 @@ class EZVIZData(object):
             return 'FAIL'
         return 'OK'
 
-    def up(self, call):
+    def up(self, _):
         self.move(0)
 
-    def down(self, call):
+    def down(self, _):
         self.move(1)
 
-    def left(self, call):
+    def left(self, _):
         self.move(2)
 
-    def right(self, call):
+    def right(self, _):
         self.move(3)
 
-    def upleft(self, call):
+    def upleft(self, _):
         self.move(4)
 
-    def downleft(self,call):
+    def downleft(self, _):
         self.move(5)
 
-    def upright(self, call):
+    def upright(self, _):
         self.move(6)
 
-    def downright(self, call):
+    def downright(self, _):
         self.move(7)
 
     def start(self, direc) -> bool:
@@ -424,7 +424,7 @@ class EZVIZData(object):
                 "speed": '1'
                }
         start_url = 'https://open.ys7.com/api/lapp/device/ptz/start'
-        return self._post(start_url, ctrl)
+        return self._post(start_url, ctrl) != {}
 
     def stop(self, call) -> bool:
         ctrl = {
@@ -432,10 +432,10 @@ class EZVIZData(object):
             "direction": call,
         }
         url = 'https://open.ys7.com/api/lapp/device/ptz/stop'
-        return self._post(url, ctrl)
+        return self._post(url, ctrl) != {}
 
     #取间隔时间里的所有告警
-    def get_alarminfo(self) -> list():
+    def get_alarminfo(self) -> list[dict]:
         startime = datetime.datetime.now() - TIME_BETWEEN_UPDATES
         starttime_s = int(startime.timestamp() * 1000)
         ctrl = {
