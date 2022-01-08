@@ -291,7 +291,7 @@ class EZVIZData(object):
             _LOGGER.error("Error API return, code=%s, msg=%s",response['code'],response['msg'])
         return  access_Token
 
-    def Get_access_Token(self, isForce=False):
+    def Get_access_Token(self, isForce:bool=False):
         if not self.access_Token:
             entobj = self.hass.states.get(self.ENTITYID)
             if entobj:
@@ -307,7 +307,7 @@ class EZVIZData(object):
         _LOGGER.debug('TOKEN_SUCCESS')
         return
 
-    def _post(self, url, data) -> dict:
+    def _post(self, url:str, data:dict) -> dict:
         # 获取access_Token
         self.Get_access_Token()
         if not self.access_Token:
@@ -381,7 +381,7 @@ class EZVIZData(object):
             self.hass.states.set('sensor.ezviz_defenceStatus', '撤防')
             _LOGGER.info("disable defence")
 
-    def move(self, direc) -> str:
+    def move(self, direc:int) -> str:
         if not self.start(direc):
             _LOGGER.error("move failed")
             return 'FAIL'
@@ -417,7 +417,7 @@ class EZVIZData(object):
     def downright(self, _):
         self.move(7)
 
-    def start(self, direc) -> bool:
+    def start(self, direc:int) -> bool:
         ctrl = {
                 "channelNo": '1',
                 "direction": direc,
