@@ -113,6 +113,7 @@ class EZVIZSensor(Entity):
                 # 增加updatetime作为属性，表示获取的时间
                 ATTR_UPDATE_TIME: self._updatetime
             }
+        return {}
 
     def update(self):
         # update只是从EZVIZData中获得数据，数据由EZVIZData维护。
@@ -274,7 +275,8 @@ class EZVIZData(object):
     def request_token(self) -> str:
         #重新获取access_token
         access_Token = ""
-        response_async = self.session.post('https://open.ys7.com/api/lapp/token/get',data=self.apikey)
+        response_async = self.session.post('https://open.ys7.com/api/lapp/token/get',
+                data=self.apikey)
         try:
             response = response_async.result().json()
         except RequestException as ex:
