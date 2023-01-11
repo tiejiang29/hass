@@ -1,0 +1,9 @@
+{
+  "domain": "ezvizctrl",
+  "name": "ezvizctrl",
+  "version": "1.0", 
+  "documentation": "https://www.example.com",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": []
+}
